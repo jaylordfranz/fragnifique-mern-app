@@ -3,7 +3,7 @@ import { View, Text, Button, StyleSheet, Alert, TouchableOpacity } from 'react-n
 import axios from 'axios';
 import InputField from '../components/InputField';
 
-const API_URL = 'http://192.168.100.33:5000/api/auth';
+const API_URL = 'http://192.168.8.36:5000/api/auth';
 
 const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');

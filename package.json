@@ -1,6 +1,11 @@
 {
   "dependencies": {
+    "@react-native-google-signin/google-signin": "^13.2.0",
     "@react-oauth/google": "^0.12.1",
-    "google-auth-library": "^9.15.1"
+    "expo": "^52.0.37",
+    "google-auth-library": "^9.15.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-native": "^0.71.8"
   }
 }

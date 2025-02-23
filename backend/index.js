@@ -1,7 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const authRoutes = require('./routes/authRoutes'); // Path to your auth route file
+const dotenv = require('dotenv');
+
+dotenv.config(); // ✅ Load .env at the start
+
+const authRoutes = require('./routes/authRoutes');
+const productRoutes = require('./routes/productRoutes');
 
 const app = express();
 
@@ -11,11 +16,24 @@ app.use(cors());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
 
-// Database connection
-mongoose.connect('mongodb+srv://jfpbdigishop:crushkosichristian@register-page.4wgsl.mongodb.net/?retryWrites=true&w=majority&appName=register-page', { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.log(err));
+// ✅ Ensure MONGODB_URI is set
+if (!process.env.MONGO_URI) {
+  console.error("❌ ERROR: MONGODB_URI is missing in .env file");
+  process.exit(1); // Stop server if .env is missing
+}
+
+// ✅ Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => console.log('✅ MongoDB Connected'))
+  .catch(err => {
+    console.error('❌ MongoDB Connection Error:', err);
+    process.exit(1);
+  });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
