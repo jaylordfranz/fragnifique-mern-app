@@ -72,26 +72,27 @@ router.put('/:id', upload.single('image'), async (req, res) => {
   try {
     console.log(`🔄 Updating product ID: ${req.params.id}`);
 
-    const { name, price, description } = req.body;
     const product = await Product.findById(req.params.id);
-    
     if (!product) {
       return res.status(404).json({ error: '❌ Product not found' });
     }
 
-    let updateData = { name, price, description };
+    // ✅ Update fields only if they exist in req.body
+    if (req.body.name) product.name = req.body.name;
+    if (req.body.price) product.price = req.body.price;
+    if (req.body.description) product.description = req.body.description;
 
+    // ✅ Handle image update
     if (req.file) {
-      updateData.image = `http://192.168.8.36:5000/uploads/${req.file.filename}`;
-      console.log('📸 New image uploaded:', updateData.image);
-    } else {
-      updateData.image = product.image; // Keep existing image if no new one is uploaded
+      product.image = `http://192.168.8.36:5000/uploads/${req.file.filename}`;
+      console.log('📸 New image uploaded:', product.image);
     }
 
-    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true });
-
-    console.log('✅ Product updated:', updatedProduct);
-    res.json(updatedProduct);
+    // ✅ Save updated product
+    await product.save();
+    
+    console.log('✅ Product updated:', product);
+    res.json(product);
   } catch (error) {
     console.error('❌ Error updating product:', error);
     res.status(500).json({ error: 'Error updating product' });

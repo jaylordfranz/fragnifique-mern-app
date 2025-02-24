@@ -50,10 +50,10 @@ const ProductCrudScreen = () => {
     formData.append('price', price);
     formData.append('description', description);
   
-    if (image) {
+    if (image && image !== editingProduct?.image) {
       formData.append('image', {
         uri: image,
-        type: 'image/jpeg', // Ensure correct MIME type
+        type: 'image/jpeg',
         name: 'product.jpg',
       });
     }
@@ -61,11 +61,24 @@ const ProductCrudScreen = () => {
     console.log("📝 Sending data:", formData);
   
     try {
-      const response = await axios.post(API_URL, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      console.log('✅ Product saved:', response.data);
-      Alert.alert('Success', 'Product added successfully');
+      if (editingProduct) {
+        // ✅ Send a PUT request for updating
+        const response = await axios.put(`${API_URL}/${editingProduct._id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        console.log('✅ Product updated:', response.data);
+        Alert.alert('Success', 'Product updated successfully');
+      } else {
+        // ✅ Send a POST request for adding new
+        const response = await axios.post(API_URL, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        console.log('✅ Product saved:', response.data);
+        Alert.alert('Success', 'Product added successfully');
+      }
+  
+      resetForm();
+      fetchProducts();
     } catch (error) {
       console.error('❌ Error saving product:', error.response?.data || error);
       Alert.alert('Error', 'Failed to save product');
