@@ -3,7 +3,7 @@ import { View, Text, TextInput, Button, FlatList, Image, Alert, StyleSheet } fro
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 
-const API_URL = 'http://192.168.8.36:5000/api/products'; // Ensure this matches your backend
+const API_URL = 'http://192.168.100.33:5000/api/products'; // Ensure this matches your backend
 
 const ProductCrudScreen = () => {
   const [products, setProducts] = useState([]);
@@ -28,16 +28,17 @@ const ProductCrudScreen = () => {
 
   const handleImagePick = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images, // ✅ Fixed property name
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
-  
+    
     if (!result.canceled) {
-      setImage(result.assets[0].uri); // ✅ Expo SDK 49+ uses `result.assets`
+      // Correctly set the URI and ensure it's sent as part of the FormData
+      setImage(result.assets[0].uri); // Expo SDK 49+ uses `result.assets`
     }
-  };  
+  };   
 
   const handleSave = async () => {
     if (!name || !price || !description) {
@@ -51,39 +52,26 @@ const ProductCrudScreen = () => {
     formData.append('description', description);
   
     if (image && image !== editingProduct?.image) {
+      // Make sure to create a file object with correct properties for the image
       formData.append('image', {
         uri: image,
-        type: 'image/jpeg',
+        type: 'image/jpeg', // Adjust type as needed
         name: 'product.jpg',
       });
     }
   
-    console.log("📝 Sending data:", formData);
-  
     try {
-      if (editingProduct) {
-        // ✅ Send a PUT request for updating
-        const response = await axios.put(`${API_URL}/${editingProduct._id}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        console.log('✅ Product updated:', response.data);
-        Alert.alert('Success', 'Product updated successfully');
-      } else {
-        // ✅ Send a POST request for adding new
-        const response = await axios.post(API_URL, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        console.log('✅ Product saved:', response.data);
-        Alert.alert('Success', 'Product added successfully');
-      }
-  
-      resetForm();
+      const response = await axios.post(API_URL, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      console.log('✅ Product saved:', response.data);
+      Alert.alert('Success', 'Product added successfully');
       fetchProducts();
     } catch (error) {
-      console.error('❌ Error saving product:', error.response?.data || error);
+      console.error('❌ Error saving product:', error);
       Alert.alert('Error', 'Failed to save product');
     }
-  };  
+  };   
 
   const handleDelete = async (id) => {
     try {

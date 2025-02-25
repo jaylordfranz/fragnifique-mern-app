@@ -39,7 +39,7 @@ router.post('/', upload.single('image'), async (req, res) => {
     // ✅ Ensure correct image handling
     let imagePath = '';
     if (req.file) {
-      imagePath = `http://192.168.8.36:5000/uploads/${req.file.filename}`;
+      imagePath = `http://192.168.100.33:5000/uploads/${req.file.filename}`;
       console.log('✅ Image path set to:', imagePath);
     } else {
       console.warn('⚠️ No image uploaded!');
@@ -84,7 +84,7 @@ router.put('/:id', upload.single('image'), async (req, res) => {
 
     // ✅ Handle image update
     if (req.file) {
-      product.image = `http://192.168.8.36:5000/uploads/${req.file.filename}`;
+      product.image = `http://192.168.100.33:5000/uploads/${req.file.filename}`;
       console.log('📸 New image uploaded:', product.image);
     }
 

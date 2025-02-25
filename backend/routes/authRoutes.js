@@ -1,62 +1,67 @@
+// Existing code
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const User = require('../models/User'); // Ensure the correct path
+const User = require('../models/User');
 
-router.post('/register', async (req, res) => {
-  const { name, email, password } = req.body;
+// Google OAuth
+const { OAuth2Client } = require('google-auth-library');
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const client = new OAuth2Client(CLIENT_ID);
 
+// Google Registration or Login (This part seems fine already)
+router.post('/google-login', async (req, res) => {
+  const { token } = req.body;
   try {
-    // Basic validation
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Please provide all fields' });
-    }
-
-    // Check for existing user
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Create and save new user
-    const newUser = new User({
-      name,
-      email,
-      password: hashedPassword,
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: CLIENT_ID,
     });
+    const { name, email } = ticket.getPayload();
+    let user = await User.findOne({ email });
 
-    await newUser.save();
-
-    res.status(201).json({ message: 'User registered successfully' });
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    // Check if user exists
-    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
-
-    // Compare password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      user = new User({
+        name,
+        email,
+        password: null,
+      });
+      await user.save();
     }
 
     res.status(200).json({ message: 'Login successful', user });
   } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error during Google login:", error.message);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// **Normal Registration Route**
+router.post('/register', async (req, res) => {
+  const { name, email, password } = req.body;
+
+  try {
+    // Check if user already exists
+    let user = await User.findOne({ email });
+    if (user) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // Hash password for normal registration
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create and save the user
+    user = new User({
+      name,
+      email,
+      password: hashedPassword, // Save the hashed password
+    });
+
+    await user.save();
+    res.status(201).json({ message: 'User registered successfully', user });
+  } catch (error) {
+    console.error("Error during registration:", error.message);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
