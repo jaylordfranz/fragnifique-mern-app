@@ -9,7 +9,32 @@ const { OAuth2Client } = require('google-auth-library');
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const client = new OAuth2Client(CLIENT_ID);
 
-// Google Registration or Login (This part seems fine already)
+// Normal Login Route
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // Check if the user exists
+    let user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // Check if password matches
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // Send user data on successful login
+    res.status(200).json({ message: 'Login successful', user });
+  } catch (error) {
+    console.error("Error during login:", error.message);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Google OAuth (Updated to handle login as well)
 router.post('/google-login', async (req, res) => {
   const { token } = req.body;
   try {
@@ -24,7 +49,7 @@ router.post('/google-login', async (req, res) => {
       user = new User({
         name,
         email,
-        password: null,
+        password: null,  // For Google login, we don't save a password
       });
       await user.save();
     }
